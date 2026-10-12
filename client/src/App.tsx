@@ -1,121 +1,251 @@
+
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
 
+type Equipment = {
+  id: number
+  name: string
+  department: string
+  location: string
+  status: string
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [equipment, setEquipment] = useState<Equipment[]>([
+    {
+      id: 1,
+      name: 'Ventilator',
+      department: 'ICU',
+      location: 'Room 101',
+      status: 'Available',
+    },
+    {
+      id: 2,
+      name: 'ECG Machine',
+      department: 'Cardiology',
+      location: 'Room 202',
+      status: 'In Use',
+    },
+    {
+      id: 3,
+      name: 'Patient Monitor',
+      department: 'Emergency',
+      location: 'Room 105',
+      status: 'Available',
+    },
+  ])
+
+  const [editingId, setEditingId] = useState<number | null>(null)
+
+  const [name, setName] = useState('')
+  const [department, setDepartment] = useState('')
+  const [location, setLocation] = useState('')
+  const [status, setStatus] = useState('Available')
+
+  const [searchTerm, setSearchTerm] = useState('')
+  const [departmentFilter, setDepartmentFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = useState('All')
+
+  const filteredEquipment = equipment.filter((item) => {
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+
+    const matchesDepartment =
+      departmentFilter === 'All' ||
+      item.department === departmentFilter
+
+    const matchesStatus =
+      statusFilter === 'All' ||
+      item.status === statusFilter
+
+    return matchesSearch && matchesDepartment && matchesStatus
+  })
+
+  function handleEdit(item: Equipment) {
+    setEditingId(item.id)
+    setName(item.name)
+    setDepartment(item.department)
+    setLocation(item.location)
+    setStatus(item.status)
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (editingId !== null) {
+      setEquipment((previous) =>
+        previous.map((item) =>
+          item.id === editingId
+            ? { ...item, name, department, location, status }
+            : item
+        )
+      )
+    } else {
+      const newEquipment: Equipment = {
+        id: Date.now(),
+        name,
+        department,
+        location,
+        status,
+      }
+
+      setEquipment((previous) => [...previous, newEquipment])
+    }
+
+    setName('')
+    setDepartment('')
+    setLocation('')
+    setStatus('Available')
+    setEditingId(null)
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null)
+    setName('')
+    setDepartment('')
+    setLocation('')
+    setStatus('Available')
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <div className="hospital-app">
+      <h1>Smart Hospital</h1>
+      <p>Healthcare Asset Management System</p>
+
+      <h2>{editingId !== null ? 'Edit Equipment' : 'Add Equipment'}</h2>
+
+      <form onSubmit={handleSubmit}>
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
+          <label htmlFor="name">Equipment Name</label>
+          <input
+            id="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="e.g. X-Ray Machine"
+            required
+          />
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+
+        <div>
+          <label htmlFor="department">Department</label>
+          <input
+            id="department"
+            value={department}
+            onChange={(event) => setDepartment(event.target.value)}
+            placeholder="e.g. Radiology"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="location">Location</label>
+          <input
+            id="location"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            placeholder="e.g. Room 301"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="status">Status</label>
+          <select
+            id="status"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option>Available</option>
+            <option>In Use</option>
+            <option>Under Maintenance</option>
+          </select>
+        </div>
+
+        <button type="submit">
+          {editingId !== null ? 'Save Changes' : 'Add Equipment'}
         </button>
-      </section>
 
-      <div className="ticks"></div>
+        {editingId !== null && (
+          <button type="button" onClick={handleCancelEdit}>
+            Cancel Edit
+          </button>
+        )}
+      </form>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <div className="equipment-controls">
+        <input
+          type="text"
+          placeholder="Search equipment..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <select
+          aria-label="Filter by department"
+          value={departmentFilter}
+          onChange={(event) => setDepartmentFilter(event.target.value)}
+        >
+          <option value="All">All Departments</option>
+          <option value="ICU">ICU</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Emergency">Emergency</option>
+          <option value="Radiology">Radiology</option>
+        </select>
+
+        <select
+          aria-label="Filter by status"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+        >
+          <option value="All">All Statuses</option>
+          <option value="Available">Available</option>
+          <option value="In Use">In Use</option>
+          <option value="Under Maintenance">Under Maintenance</option>
+        </select>
+      </div>
+
+      <h2>Equipment List</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Equipment Name</th>
+            <th>Department</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {filteredEquipment.map((item) => (
+            <tr key={item.id}>
+              <td>{item.name}</td>
+              <td>{item.department}</td>
+              <td>{item.location}</td>
+              <td>{item.status}</td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() => handleEdit(item)}
+                >
+                  Edit
+                </button>
+              </td>
+            </tr>
+          ))}
+
+          {filteredEquipment.length === 0 && (
+            <tr>
+              <td colSpan={5}>No equipment matches your search.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
