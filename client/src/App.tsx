@@ -12,31 +12,12 @@ type Equipment = {
 
 function App() {
   const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: 1,
-      name: 'Ventilator',
-      department: 'ICU',
-      location: 'Room 101',
-      status: 'Available',
-    },
-    {
-      id: 2,
-      name: 'ECG Machine',
-      department: 'Cardiology',
-      location: 'Room 202',
-      status: 'In Use',
-    },
-    {
-      id: 3,
-      name: 'Patient Monitor',
-      department: 'Emergency',
-      location: 'Room 105',
-      status: 'Available',
-    },
+    { id: 1, name: 'Ventilator', department: 'ICU', location: 'Room 101', status: 'Available' },
+    { id: 2, name: 'ECG Machine', department: 'Cardiology', location: 'Room 202', status: 'In Use' },
+    { id: 3, name: 'Patient Monitor', department: 'Emergency', location: 'Room 105', status: 'Available' },
   ])
 
   const [editingId, setEditingId] = useState<number | null>(null)
-
   const [name, setName] = useState('')
   const [department, setDepartment] = useState('')
   const [location, setLocation] = useState('')
@@ -47,60 +28,12 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('All')
 
   const filteredEquipment = equipment.filter((item) => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-
-    const matchesDepartment =
-      departmentFilter === 'All' ||
-      item.department === departmentFilter
-
-    const matchesStatus =
-      statusFilter === 'All' ||
-      item.status === statusFilter
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesDepartment = departmentFilter === 'All' || item.department === departmentFilter
+    const matchesStatus = statusFilter === 'All' || item.status === statusFilter
 
     return matchesSearch && matchesDepartment && matchesStatus
   })
-
-  function handleEdit(item: Equipment) {
-    setEditingId(item.id)
-    setName(item.name)
-    setDepartment(item.department)
-    setLocation(item.location)
-    setStatus(item.status)
-
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (editingId !== null) {
-      setEquipment((previous) =>
-        previous.map((item) =>
-          item.id === editingId
-            ? { ...item, name, department, location, status }
-            : item
-        )
-      )
-    } else {
-      const newEquipment: Equipment = {
-        id: Date.now(),
-        name,
-        department,
-        location,
-        status,
-      }
-
-      setEquipment((previous) => [...previous, newEquipment])
-    }
-
-    setName('')
-    setDepartment('')
-    setLocation('')
-    setStatus('Available')
-    setEditingId(null)
-  }
 
   function handleCancelEdit() {
     setEditingId(null)
@@ -108,6 +41,72 @@ function App() {
     setDepartment('')
     setLocation('')
     setStatus('Available')
+  }
+
+  function handleEdit(item: Equipment) {
+    setEditingId(item.id)
+    setName(item.name)
+    setDepartment(item.department)
+    setLocation(item.location)
+    setStatus(item.status)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function handleDelete(item: Equipment) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${item.name}?`,
+    )
+
+    if (!confirmed) return
+
+    setEquipment((previous) =>
+      previous.filter((equipmentItem) => equipmentItem.id !== item.id),
+    )
+
+    if (editingId === item.id) {
+      handleCancelEdit()
+    }
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const cleanName = name.trim()
+    const cleanDepartment = department.trim()
+    const cleanLocation = location.trim()
+
+    if (!cleanName || !cleanDepartment || !cleanLocation) {
+      window.alert('Please fill in all fields.')
+      return
+    }
+
+    if (editingId !== null) {
+      setEquipment((previous) =>
+        previous.map((item) =>
+          item.id === editingId
+            ? {
+                ...item,
+                name: cleanName,
+                department: cleanDepartment,
+                location: cleanLocation,
+                status,
+              }
+            : item,
+        ),
+      )
+    } else {
+      const newEquipment: Equipment = {
+        id: Date.now(),
+        name: cleanName,
+        department: cleanDepartment,
+        location: cleanLocation,
+        status,
+      }
+
+      setEquipment((previous) => [...previous, newEquipment])
+    }
+
+    handleCancelEdit()
   }
 
   return (
@@ -228,11 +227,11 @@ function App() {
               <td>{item.location}</td>
               <td>{item.status}</td>
               <td>
-                <button
-                  type="button"
-                  onClick={() => handleEdit(item)}
-                >
+                <button type="button" onClick={() => handleEdit(item)}>
                   Edit
+                </button>{' '}
+                <button type="button" onClick={() => handleDelete(item)}>
+                  Delete
                 </button>
               </td>
             </tr>
