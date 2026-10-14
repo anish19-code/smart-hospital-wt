@@ -182,103 +182,138 @@ function App() {
   return (
     <div className="hospital-app">
       <header className="hospital-header">
-        <h1>Smart Hospital</h1>
-        <p>Healthcare Asset Management System</p>
+        <div className="brand-box">
+          <div className="brand-medical-logo" aria-label="Medical logo">
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M32 5L51 13V28C51 41 43 51 32 58C21 51 13 41 13 28V13L32 5Z"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M32 19V39M22 29H42"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M17 45H25L29 37L35 48L40 40H47"
+                stroke="#7EF0D0"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          <div className="brand-text">
+            <h1>Smart Hospital</h1>
+            <p>Healthcare Asset Management System</p>
+            <span className="brand-accent-line"></span>
+          </div>
+        </div>
       </header>
 
-      {/* Dashboard summary */}
-      <section className="dashboard-cards" aria-label="Equipment summary">
-        <div className="dashboard-card">
-          <h3>Total Equipment</h3>
-          <p>{totalEquipment}</p>
-        </div>
+      <div className="dashboard-top-layout">
+        {/* Add/Edit equipment form */}
+        <section className="equipment-form-section">
+          <h2>
+            {editingId !== null ? 'Edit Equipment' : 'Add Equipment'}
+          </h2>
 
-        <div className="dashboard-card">
-          <h3>Available</h3>
-          <p>{availableEquipment}</p>
-        </div>
+          <form onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="name">Equipment Name</label>
+              <input
+                id="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="e.g. X-Ray Machine"
+                required
+              />
+            </div>
 
-        <div className="dashboard-card">
-          <h3>In Use</h3>
-          <p>{inUseEquipment}</p>
-        </div>
+            <div>
+              <label htmlFor="department">Department</label>
+              <input
+                id="department"
+                value={department}
+                onChange={(event) => setDepartment(event.target.value)}
+                placeholder="e.g. Radiology"
+                required
+              />
+            </div>
 
-        <div className="dashboard-card">
-          <h3>Under Maintenance</h3>
-          <p>{maintenanceEquipment}</p>
-        </div>
-      </section>
+            <div>
+              <label htmlFor="location">Location</label>
+              <input
+                id="location"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                placeholder="e.g. Room 301"
+                required
+              />
+            </div>
 
-      {/* Add/Edit equipment form */}
-      <section className="equipment-form-section">
-        <h2>
-          {editingId !== null ? 'Edit Equipment' : 'Add Equipment'}
-        </h2>
+            <div>
+              <label htmlFor="status">Status</label>
+              <select
+                id="status"
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as EquipmentStatus)
+                }
+              >
+                {statuses.map((itemStatus) => (
+                  <option key={itemStatus} value={itemStatus}>
+                    {itemStatus}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="name">Equipment Name</label>
-            <input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. X-Ray Machine"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="department">Department</label>
-            <input
-              id="department"
-              value={department}
-              onChange={(event) => setDepartment(event.target.value)}
-              placeholder="e.g. Radiology"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="location">Location</label>
-            <input
-              id="location"
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              placeholder="e.g. Room 301"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as EquipmentStatus)
-              }
-            >
-              {statuses.map((itemStatus) => (
-                <option key={itemStatus} value={itemStatus}>
-                  {itemStatus}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-actions">
-            <button type="submit">
-              {editingId !== null ? 'Save Changes' : 'Add Equipment'}
-            </button>
-
-            {editingId !== null && (
-              <button type="button" onClick={handleCancelEdit}>
-                Cancel Edit
+            <div className="form-actions">
+              <button type="submit">
+                {editingId !== null ? 'Save Changes' : 'Add Equipment'}
               </button>
-            )}
+
+              {editingId !== null && (
+                <button type="button" onClick={handleCancelEdit}>
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        {/* Dashboard summary */}
+        <section className="dashboard-cards" aria-label="Equipment summary">
+          <div className="dashboard-card">
+            <h3>Total Equipment</h3>
+            <p>{totalEquipment}</p>
           </div>
-        </form>
-      </section>
+
+          <div className="dashboard-card">
+            <h3>Available</h3>
+            <p>{availableEquipment}</p>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>In Use</h3>
+            <p>{inUseEquipment}</p>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Under Maintenance</h3>
+            <p>{maintenanceEquipment}</p>
+          </div>
+        </section>
+      </div>
 
       {/* Equipment search and filters */}
       <section className="equipment-list-section">

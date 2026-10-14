@@ -1,19 +1,36 @@
 
-/* ===== Global styles ===== */
+/* ==========================================
+   SMART HOSPITAL — PREMIUM BLUE + LAVENDER
+   Compact Form | Horizontal Summary Cards
+   ========================================== */
+
+/* ---------- 1. GLOBAL THEME ---------- */
+
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: #172033;
-  background: #f4f7fb;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+
+  color: #294357;
+  background: #f0f4ff;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --primary: #1769aa;
-  --primary-hover: #12558b;
-  --border: #dce4ee;
-  --muted: #64748b;
+  --primary: #123b5d;
+  --primary-hover: #0c2d49;
+  --primary-light: #e8f3ff;
+  --teal: #167c83;
+  --teal-light: #e8f6f5;
+  --border: #dce5f0;
+  --muted: #718497;
+  --heading: #123b5d;
+  --surface: #ffffff;
+  --page-bg: #f0f4ff;
+
+  --shadow-sm: 0 5px 18px rgba(35, 65, 115, 0.07);
+  --shadow-md: 0 8px 26px rgba(35, 65, 115, 0.09);
 }
 
 * {
@@ -24,6 +41,13 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: #294357;
+  background: linear-gradient(
+    135deg,
+    #eef5ff 0%,
+    #f4f0ff 55%,
+    #f8faff 100%
+  );
 }
 
 button,
@@ -36,233 +60,480 @@ button {
   cursor: pointer;
 }
 
-/* ===== Main application ===== */
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(22, 124, 131, 0.22);
+  outline-offset: 2px;
+}
+
+
+/* ---------- 2. MAIN APPLICATION ---------- */
+
 .hospital-app {
-  width: min(1200px, calc(100% - 40px));
+  width: min(1240px, calc(100% - 48px));
   margin: 0 auto;
   padding: 32px 0 48px;
 }
 
+
+/* ---------- 3. HOSPITAL HEADER ---------- */
+/* Header styling preserved */
+
 .hospital-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 12px;
   margin-bottom: 28px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.hospital-header h1 {
+.brand-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  width: min(1050px, 100%);
+  min-height: 145px;
+  padding: 28px 48px;
+
+  background: linear-gradient(
+    115deg,
+    #123b5d 0%,
+    #145b78 55%,
+    #167c83 100%
+  );
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  box-shadow: 0 10px 26px rgba(18, 59, 93, 0.18);
+}
+
+.brand-medical-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  padding: 15px;
+
+  color: #ffffff;
+  background: rgba(118, 210, 232, 0.15);
+  border: 1px solid rgba(174, 231, 245, 0.35);
+  border-radius: 18px;
+}
+
+.brand-medical-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brand-text {
+  min-width: 0;
+  text-align: left;
+}
+
+.brand-text h1 {
   margin: 0 0 8px;
-  color: #12345a;
-  font-size: clamp(28px, 4vw, 36px);
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 750;
   line-height: 1.2;
+  letter-spacing: -0.6px;
 }
 
-.hospital-header p {
+.brand-text p {
   margin: 0;
-  color: var(--muted);
-  font-size: 16px;
+  padding: 0;
+  color: #d4f0f5;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.25px;
+  border: none;
+  text-decoration: none;
+  box-shadow: none;
 }
 
-/* ===== Dashboard cards ===== */
+.brand-accent-line {
+  display: none !important;
+}
+
+
+/* ---------- 4. TOP DASHBOARD LAYOUT ---------- */
+
+.dashboard-top-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 26px;
+}
+
+.dashboard-top-layout .dashboard-cards {
+  order: -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.dashboard-top-layout .equipment-form-section {
+  order: 1;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.dashboard-top-layout .dashboard-card {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+
+/* ---------- 5. SUMMARY CARDS ---------- */
+
 .dashboard-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
-  margin: 0 0 32px;
+  margin: 0 0 28px;
 }
 
 .dashboard-card {
+  position: relative;
   min-width: 0;
-  padding: 22px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  padding: 23px 22px;
+
+  background: linear-gradient(140deg, #ffffff 0%, #f2f6ff 100%);
+  border: 1px solid #dce5f3;
+  border-top: 4px solid #477de0;
+  border-radius: 15px;
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.dashboard-card:nth-child(2) {
+  background: linear-gradient(140deg, #ffffff 0%, #effbf5 100%);
+  border-top-color: #29a477;
+}
+
+.dashboard-card:nth-child(3) {
+  background: linear-gradient(140deg, #ffffff 0%, #edf6ff 100%);
+  border-top-color: #3984c7;
+}
+
+.dashboard-card:nth-child(4) {
+  background: linear-gradient(140deg, #ffffff 0%, #fff7e9 100%);
+  border-top-color: #e3a23b;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 27px rgba(35, 65, 115, 0.12);
 }
 
 .dashboard-card h3 {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
+  margin: 0 0 13px;
+  color: #61778a;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
 }
 
 .dashboard-card p {
   margin: 0;
-  color: #12345a;
-  font-size: 32px;
+  color: var(--heading);
+  font-size: clamp(27px, 2.5vw, 35px);
   font-weight: 750;
+  letter-spacing: -1px;
+  line-height: 1.2;
 }
 
-/* ===== Form section ===== */
+
+/* ---------- 6. FORM AND TABLE PANELS ---------- */
+
 .equipment-form-section,
 .equipment-list-section {
   min-width: 0;
-  margin-bottom: 28px;
-  padding: 24px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+  margin-bottom: 20px;
+  padding: 22px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dce5f0;
+  border-radius: 15px;
+  box-shadow: var(--shadow-md);
 }
 
 .equipment-form-section h2,
 .equipment-list-heading h2 {
   margin: 0;
-  color: #12345a;
-  font-size: 21px;
+  color: var(--heading);
+  font-size: 20px;
+  font-weight: 720;
+  letter-spacing: -0.35px;
 }
 
 .equipment-form-section h2 {
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+
+
+/* ---------- 7. COMPACT ADD EQUIPMENT FORM ---------- */
+
+/*
+   Two columns:
+   Left  = Equipment Name, Department
+   Right = Remaining two fields
+
+   This grid places each pair of fields side by side.
+*/
+
+.equipment-form-section {
+  display: flex;
+  flex-direction: column;
 }
 
 .equipment-form-section form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 22px;
+  row-gap: 12px;
+  align-items: start;
+  width: 100%;
 }
 
-.equipment-form-section form > div {
+/* Each field */
+
+.equipment-form-section form > div:not(.form-actions) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
   min-width: 0;
 }
 
 .equipment-form-section label {
   display: block;
-  margin-bottom: 8px;
-  color: #334155;
-  font-size: 14px;
-  font-weight: 600;
+  margin-bottom: 0;
+  color: #294b65;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .equipment-form-section input,
-.equipment-form-section select,
-.equipment-controls input,
-.equipment-controls select {
+.equipment-form-section select {
   width: 100%;
   min-width: 0;
-  min-height: 42px;
-  padding: 10px 12px;
-  color: #172033;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  min-height: 40px;
+  padding: 9px 12px;
+
+  color: #294357;
+  background: #f8faff;
+  border: 1px solid #cfdae8;
   border-radius: 8px;
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
-input:focus-visible,
-select:focus-visible,
-button:focus-visible {
-  outline: 3px solid rgba(23, 105, 170, 0.25);
-  outline-offset: 2px;
+.equipment-form-section input::placeholder {
+  color: #91a2b0;
 }
+
+.equipment-form-section input:focus,
+.equipment-form-section select:focus {
+  background: #ffffff;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(22, 124, 131, 0.12);
+}
+
+
+/* ---------- 8. FORM BUTTONS ---------- */
 
 .form-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
+
+  width: 100%;
   grid-column: 1 / -1;
+  margin-top: 0;
+  padding-top: 3px;
 }
 
-/* ===== Buttons ===== */
 .form-actions button,
 .equipment-controls button,
 .equipment-actions button {
-  min-height: 40px;
-  padding: 9px 15px;
+  min-height: 41px;
+  padding: 10px 16px;
+
   color: #ffffff;
-  background: var(--primary);
-  border: 1px solid var(--primary);
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  background: linear-gradient(135deg, #2458a6, #167c83);
+  border: 1px solid #2458a6;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 650;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .form-actions button:hover,
 .equipment-controls button:hover,
 .equipment-actions button:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+  background: linear-gradient(135deg, #123b5d, #145b78);
+  border-color: #123b5d;
+  box-shadow: 0 4px 10px rgba(18, 59, 93, 0.16);
+}
+
+.form-actions button:active,
+.equipment-controls button:active,
+.equipment-actions button:active {
+  transform: translateY(1px);
 }
 
 .form-actions button[type="button"] {
-  color: #334155;
+  color: #405a6d;
   background: #ffffff;
-  border-color: #cbd5e1;
+  border-color: #d3dfe8;
+  box-shadow: none;
 }
 
 .form-actions button[type="button"]:hover {
-  background: #f1f5f9;
+  background: #edf4ff;
 }
 
-/* ===== Search and filters ===== */
+
+/* ---------- 9. SEARCH AND FILTERS ---------- */
+
 .equipment-controls {
   display: grid;
-  grid-template-columns: minmax(180px, 2fr) repeat(2, minmax(140px, 1fr)) auto;
+  grid-template-columns:
+    minmax(180px, 2fr)
+    repeat(2, minmax(140px, 1fr))
+    auto;
   gap: 12px;
   align-items: center;
   margin-bottom: 24px;
 }
 
 .equipment-controls button {
+  min-height: 45px;
   white-space: nowrap;
 }
 
-/* ===== Equipment list heading and counter ===== */
+
+/* ---------- 10. EQUIPMENT LIST HEADING ---------- */
+
 .equipment-list-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 0 0 16px;
+  margin: 0 0 18px;
+}
+
+.equipment-list-heading h2 {
+  margin: 0;
 }
 
 .equipment-list-heading p {
   margin: 0;
-  color: var(--muted);
-  font-size: 14px;
+  padding: 7px 11px;
+  color: #49677c;
+  background: #edf4ff;
+  border: 1px solid #dce5f3;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 550;
 }
 
-/* ===== Equipment table ===== */
+
+/* ---------- 11. EQUIPMENT TABLE ---------- */
+
 .equipment-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid #dce5f0;
+  border-radius: 11px;
 }
 
 .equipment-table-wrapper table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  background: #ffffff;
 }
 
 .equipment-table-wrapper th,
 .equipment-table-wrapper td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #e8edf3;
+  padding: 15px 16px;
+  border-bottom: 1px solid #e7edf5;
   vertical-align: middle;
 }
 
 .equipment-table-wrapper th {
-  color: #334155;
-  background: #f8fafc;
-  font-size: 13px;
-  font-weight: 700;
+  color: #ffffff;
+  background: #123b5d;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .equipment-table-wrapper td {
-  color: #334155;
-  font-size: 14px;
+  color: #40586b;
+  font-size: 13px;
+}
+
+.equipment-table-wrapper td:first-child {
+  color: #183d59;
+  font-weight: 650;
+}
+
+.equipment-table-wrapper tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.equipment-table-wrapper tbody tr:nth-child(even) {
+  background: #f6f8ff;
+}
+
+.equipment-table-wrapper tbody tr:hover {
+  background: #eaf5ff;
 }
 
 .equipment-table-wrapper tbody tr:last-child td {
   border-bottom: none;
 }
 
-.equipment-table-wrapper tbody tr:hover {
-  background: #fafcff;
-}
+
+/* ---------- 12. EDIT AND DELETE BUTTONS ---------- */
 
 .equipment-actions {
   display: flex;
@@ -271,57 +542,73 @@ button:focus-visible {
 }
 
 .equipment-actions button {
-  min-height: 34px;
-  padding: 6px 10px;
+  min-height: 33px;
+  padding: 7px 11px;
+  font-size: 12px;
 }
 
 .equipment-actions button:last-child {
-  color: #b91c1c;
+  color: #bd4b4b;
   background: #ffffff;
-  border-color: #fecaca;
+  border-color: #f0d5d2;
+  box-shadow: none;
 }
 
 .equipment-actions button:last-child:hover {
   color: #ffffff;
-  background: #b91c1c;
-  border-color: #b91c1c;
+  background: #bd4b4b;
+  border-color: #bd4b4b;
 }
 
-/* ===== Equipment status badges ===== */
+
+/* ---------- 13. STATUS BADGES ---------- */
+
 .status-badge {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .status-badge.available {
-  color: #166534;
-  background: #dcfce7;
+  color: #23754f;
+  background: #e6f6ec;
+  border-color: #d4eddd;
 }
 
 .status-badge.in-use {
-  color: #1d4ed8;
-  background: #dbeafe;
+  color: #2d679e;
+  background: #e9f2fc;
+  border-color: #d8e8f8;
 }
 
 .status-badge.under-maintenance {
-  color: #92400e;
-  background: #fef3c7;
+  color: #94651b;
+  background: #fff4dd;
+  border-color: #f5e7c4;
 }
 
-/* ===== Empty search result ===== */
+
+/* ---------- 14. EMPTY STATE ---------- */
+
 .empty-state {
-  padding: 28px 16px !important;
+  padding: 32px 16px !important;
   color: var(--muted) !important;
   text-align: center;
 }
 
-/* ===== Tablet layout ===== */
+
+/* ---------- 15. TABLET RESPONSIVE ---------- */
+
 @media (max-width: 900px) {
-  .dashboard-cards {
+  .hospital-app {
+    width: calc(100% - 36px);
+  }
+
+  .dashboard-top-layout .dashboard-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -332,50 +619,114 @@ button:focus-visible {
   .equipment-controls input {
     grid-column: 1 / -1;
   }
+
+  .equipment-form-section,
+  .equipment-list-section {
+    padding: 22px;
+  }
+
+  .brand-box {
+    padding: 26px 32px;
+  }
 }
 
-/* ===== Mobile layout ===== */
+
+/* ---------- 16. MOBILE RESPONSIVE ---------- */
+
 @media (max-width: 600px) {
   .hospital-app {
     width: calc(100% - 24px);
-    padding: 22px 0 32px;
+    padding: 20px 0 32px;
   }
 
-  .dashboard-cards {
-    gap: 12px;
-    margin-bottom: 22px;
+  .hospital-header {
+    padding: 12px 0;
+    margin-bottom: 20px;
   }
 
-  .dashboard-card {
-    padding: 16px;
+  .brand-box {
+    gap: 14px;
+    width: 100%;
+    min-height: 110px;
+    padding: 20px 16px;
+    border-radius: 16px;
   }
 
-  .dashboard-card h3 {
-    font-size: 12px;
+  .brand-medical-logo {
+    width: 54px;
+    height: 54px;
+    padding: 10px;
+    border-radius: 13px;
   }
 
-  .dashboard-card p {
-    font-size: 26px;
+  .brand-text h1 {
+    font-size: 24px;
+    letter-spacing: -0.4px;
+  }
+
+  .brand-text p {
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  .dashboard-top-layout {
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-top-layout .dashboard-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-top-layout .dashboard-card {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  .dashboard-top-layout .dashboard-card h3 {
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+
+  .dashboard-top-layout .dashboard-card p {
+    font-size: 25px;
   }
 
   .equipment-form-section,
   .equipment-list-section {
-    padding: 16px;
-    margin-bottom: 20px;
+    padding: 18px 15px;
+    margin-bottom: 19px;
+    border-radius: 13px;
   }
 
+  .equipment-form-section h2,
+  .equipment-list-heading h2 {
+    font-size: 18px;
+  }
+
+  .equipment-form-section h2 {
+    margin-bottom: 14px;
+  }
+
+  /* Stack the fields on small phone screens */
   .equipment-form-section form {
-    grid-template-columns: 1fr;
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
   }
 
   .form-actions {
-    grid-column: auto;
+    gap: 8px;
+  }
+
+  .form-actions button {
+    flex: 1;
   }
 
   .equipment-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+    margin-bottom: 20px;
   }
 
   .equipment-controls input {
@@ -386,8 +737,115 @@ button:focus-visible {
     width: 100%;
   }
 
+  .equipment-list-heading {
+    align-items: flex-start;
+  }
+
+  .equipment-table-wrapper {
+    border-radius: 9px;
+  }
+
   .equipment-table-wrapper th,
   .equipment-table-wrapper td {
-    padding: 11px 12px;
+    padding: 12px 13px;
   }
+}
+
+@media (max-width: 380px) {
+  .brand-box {
+    gap: 10px;
+    padding: 16px 12px;
+  }
+
+  .brand-medical-logo {
+    width: 46px;
+    height: 46px;
+    padding: 8px;
+  }
+
+  .brand-text h1 {
+    font-size: 21px;
+  }
+
+  .brand-text p {
+    font-size: 10px;
+  }
+}
+
+
+/* ---------- 17. REDUCED MOTION ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Align Add Equipment labels to the left */
+.equipment-form-section label {
+  width: 100%;
+  text-align: left;
+  align-self: flex-start;
+  margin: 0;
+}
+
+/* Keep input fields aligned below their labels */
+.equipment-form-section form > div:not(.form-actions) {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Center the Add Equipment form buttons */
+.equipment-form-section .form-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+/* Search and Filter Labels */
+.equipment-controls label {
+  color: #123b5d;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: left;
+}
+
+/* Search and Filter Fields */
+.equipment-controls input,
+.equipment-controls select {
+  color: #294357;
+  background: #f0f8fc;
+  border: 1px solid #a9d3df;
+  border-radius: 9px;
+  font-weight: 500;
+}
+
+/* Focus effect */
+.equipment-controls input:focus,
+.equipment-controls select:focus {
+  background: #ffffff;
+  border-color: #167c83;
+  box-shadow: 0 0 0 3px rgba(22, 124, 131, 0.13);
+  outline: none;
+}
+
+/* Search and Filter Buttons */
+.equipment-controls button {
+  color: #ffffff;
+  background: linear-gradient(135deg, #145b78, #167c83);
+  border: 1px solid #145b78;
+  border-radius: 9px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.equipment-controls button:hover {
+  background: linear-gradient(135deg, #123b5d, #104f65);
+  box-shadow: 0 4px 10px rgba(18, 59, 93, 0.18);
 }
