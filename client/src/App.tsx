@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import Login, { type UserRole } from './Login'
 import './App.css'
 
 type EquipmentStatus = 'Available' | 'In Use' | 'Under Maintenance'
@@ -13,12 +14,7 @@ type Equipment = {
   status: EquipmentStatus
 }
 
-const departments = [
-  'ICU',
-  'Cardiology',
-  'Emergency',
-  'Radiology',
-]
+const departments = ['ICU', 'Cardiology', 'Emergency', 'Radiology']
 
 const statuses: EquipmentStatus[] = [
   'Available',
@@ -27,6 +23,8 @@ const statuses: EquipmentStatus[] = [
 ]
 
 function App() {
+  const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
+
   const [equipment, setEquipment] = useState<Equipment[]>([
     {
       id: 1,
@@ -61,7 +59,6 @@ function App() {
   const [departmentFilter, setDepartmentFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
 
-  // Dashboard statistics
   const totalEquipment = equipment.length
 
   const availableEquipment = equipment.filter(
@@ -76,24 +73,20 @@ function App() {
     (item) => item.status === 'Under Maintenance',
   ).length
 
-  // Search and filter equipment
   const filteredEquipment = equipment.filter((item) => {
     const matchesSearch = item.name
       .toLowerCase()
       .includes(searchTerm.trim().toLowerCase())
 
     const matchesDepartment =
-      departmentFilter === 'All' ||
-      item.department === departmentFilter
+      departmentFilter === 'All' || item.department === departmentFilter
 
     const matchesStatus =
-      statusFilter === 'All' ||
-      item.status === statusFilter
+      statusFilter === 'All' || item.status === statusFilter
 
     return matchesSearch && matchesDepartment && matchesStatus
   })
 
-  // Reset the form after adding, editing, or cancelling
   function handleCancelEdit() {
     setEditingId(null)
     setName('')
@@ -102,15 +95,15 @@ function App() {
     setStatus('Available')
   }
 
-  // Reset search and filters
   function handleResetFilters() {
     setSearchTerm('')
     setDepartmentFilter('All')
     setStatusFilter('All')
   }
 
-  // Load equipment details into the form for editing
   function handleEdit(item: Equipment) {
+    if (currentRole !== 'Admin') return
+
     setEditingId(item.id)
     setName(item.name)
     setDepartment(item.department)
@@ -120,8 +113,9 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Delete equipment after confirmation
   function handleDelete(item: Equipment) {
+    if (currentRole !== 'Admin') return
+
     const confirmed = window.confirm(
       `Are you sure you want to delete ${item.name}?`,
     )
@@ -137,9 +131,24 @@ function App() {
     }
   }
 
-  // Add new equipment or save edited equipment
+  function handleStatusChange(id: number, newStatus: EquipmentStatus) {
+    if (currentRole !== 'Admin' && currentRole !== 'Staff') return
+
+    setEquipment((previous) =>
+      previous.map((item) =>
+        item.id === id ? { ...item, status: newStatus } : item,
+      ),
+    )
+
+    if (editingId === id) {
+      setStatus(newStatus)
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (currentRole !== 'Admin') return
 
     const cleanName = name.trim()
     const cleanDepartment = department.trim()
@@ -178,6 +187,14 @@ function App() {
 
     handleCancelEdit()
   }
+
+  if (currentRole === null) {
+    return <Login onLogin={setCurrentRole} />
+  }
+
+  const canManageEquipment = currentRole === 'Admin'
+  const canUpdateStatus =
+    currentRole === 'Admin' || currentRole === 'Staff'
 
   return (
     <div className="hospital-app">
@@ -219,79 +236,108 @@ function App() {
         </div>
       </header>
 
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+          padding: '14px 24px',
+        }}
+      >
+        <p style={{ margin: 0 }}>
+          Signed in as <strong>{currentRole}</strong>
+          {' · '}
+          {currentRole === 'Admin'
+            ? 'Full equipment management'
+            : currentRole === 'Staff'
+              ? 'Equipment status updates'
+              : 'Read-only access'}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => {
+            handleCancelEdit()
+            setCurrentRole(null)
+          }}
+        >
+          Log Out
+        </button>
+      </div>
+
       <div className="dashboard-top-layout">
-        {/* Add/Edit equipment form */}
-        <section className="equipment-form-section">
-          <h2>
-            {editingId !== null ? 'Edit Equipment' : 'Add Equipment'}
-          </h2>
+        {canManageEquipment && (
+          <section className="equipment-form-section">
+            <h2>{editingId !== null ? 'Edit Equipment' : 'Add Equipment'}</h2>
 
-          <form onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="name">Equipment Name</label>
-              <input
-                id="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. X-Ray Machine"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="name">Equipment Name</label>
+                <input
+                  id="name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="e.g. X-Ray Machine"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="department">Department</label>
-              <input
-                id="department"
-                value={department}
-                onChange={(event) => setDepartment(event.target.value)}
-                placeholder="e.g. Radiology"
-                required
-              />
-            </div>
+              <div>
+                <label htmlFor="department">Department</label>
+                <input
+                  id="department"
+                  value={department}
+                  onChange={(event) => setDepartment(event.target.value)}
+                  placeholder="e.g. Radiology"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="location">Location</label>
-              <input
-                id="location"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                placeholder="e.g. Room 301"
-                required
-              />
-            </div>
+              <div>
+                <label htmlFor="location">Location</label>
+                <input
+                  id="location"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  placeholder="e.g. Room 301"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as EquipmentStatus)
-                }
-              >
-                {statuses.map((itemStatus) => (
-                  <option key={itemStatus} value={itemStatus}>
-                    {itemStatus}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div>
+                <label htmlFor="status">Status</label>
+                <select
+                  id="status"
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(event.target.value as EquipmentStatus)
+                  }
+                >
+                  {statuses.map((itemStatus) => (
+                    <option key={itemStatus} value={itemStatus}>
+                      {itemStatus}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="form-actions">
-              <button type="submit">
-                {editingId !== null ? 'Save Changes' : 'Add Equipment'}
-              </button>
-
-              {editingId !== null && (
-                <button type="button" onClick={handleCancelEdit}>
-                  Cancel Edit
+              <div className="form-actions">
+                <button type="submit">
+                  {editingId !== null ? 'Save Changes' : 'Add Equipment'}
                 </button>
-              )}
-            </div>
-          </form>
-        </section>
 
-        {/* Dashboard summary */}
+                {editingId !== null && (
+                  <button type="button" onClick={handleCancelEdit}>
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </section>
+        )}
+
         <section className="dashboard-cards" aria-label="Equipment summary">
           <div className="dashboard-card">
             <h3>Total Equipment</h3>
@@ -315,7 +361,6 @@ function App() {
         </section>
       </div>
 
-      {/* Equipment search and filters */}
       <section className="equipment-list-section">
         <div className="equipment-controls">
           <input
@@ -373,7 +418,13 @@ function App() {
                 <th scope="col">Department</th>
                 <th scope="col">Location</th>
                 <th scope="col">Status</th>
-                <th scope="col">Actions</th>
+                <th scope="col">
+                  {canManageEquipment
+                    ? 'Actions'
+                    : canUpdateStatus
+                      ? 'Update Status'
+                      : 'Access'}
+                </th>
               </tr>
             </thead>
 
@@ -384,32 +435,58 @@ function App() {
                   <td>{item.department}</td>
                   <td>{item.location}</td>
                   <td>
-                    <span
-                      className={`status-badge ${item.status
-                        .toLowerCase()
-                        .replace(/\s+/g, '-')}`}
-                    >
-                      {item.status}
-                    </span>
+                    {canUpdateStatus ? (
+                      <select
+                        aria-label={`Update status for ${item.name}`}
+                        value={item.status}
+                        onChange={(event) =>
+                          handleStatusChange(
+                            item.id,
+                            event.target.value as EquipmentStatus,
+                          )
+                        }
+                      >
+                        {statuses.map((itemStatus) => (
+                          <option key={itemStatus} value={itemStatus}>
+                            {itemStatus}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span
+                        className={`status-badge ${item.status
+                          .toLowerCase()
+                          .replace(/\s+/g, '-')}`}
+                      >
+                        {item.status}
+                      </span>
+                    )}
                   </td>
-                  <td>
-                    <div className="equipment-actions">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(item)}
-                        aria-label={`Edit ${item.name}`}
-                      >
-                        Edit
-                      </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item)}
-                        aria-label={`Delete ${item.name}`}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <td>
+                    {canManageEquipment ? (
+                      <div className="equipment-actions">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          aria-label={`Edit ${item.name}`}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          aria-label={`Delete ${item.name}`}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : currentRole === 'Staff' ? (
+                      <span>Status only</span>
+                    ) : (
+                      <span>Read only</span>
+                    )}
                   </td>
                 </tr>
               ))}
