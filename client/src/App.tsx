@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import Login, { type UserRole } from './Login'
+import Login, { type UserRole } from './login'
 import './App.css'
 
 type EquipmentStatus = 'Available' | 'In Use' | 'Under Maintenance'
@@ -689,3 +689,4 @@ function App() {
 }
 
 export default App
+
