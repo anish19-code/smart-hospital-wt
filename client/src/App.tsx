@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import Login, { type UserRole } from './Login'
 import './App.css'
@@ -8,13 +8,30 @@ type EquipmentStatus = 'Available' | 'In Use' | 'Under Maintenance'
 
 type Equipment = {
   id: number
+  assetTag: string
   name: string
   department: string
   location: string
   status: EquipmentStatus
 }
 
-const departments = ['ICU', 'Cardiology', 'Emergency', 'Radiology']
+type ApiEquipment = {
+  id: number
+  assetTag: string
+  name: string
+  category: string
+  location: string
+  status: string
+}
+
+type ApiResponse<T> = {
+  success: boolean
+  message?: string
+  count?: number
+  data?: T
+}
+
+const API_URL = 'http://localhost:5000/api/equipment'
 
 const statuses: EquipmentStatus[] = [
   'Available',
@@ -22,35 +39,60 @@ const statuses: EquipmentStatus[] = [
   'Under Maintenance',
 ]
 
+function toApiStatus(status: EquipmentStatus): string {
+  if (status === 'In Use') return 'IN_USE'
+  if (status === 'Under Maintenance') return 'UNDER_MAINTENANCE'
+  return 'AVAILABLE'
+}
+
+function mapApiEquipment(item: ApiEquipment): Equipment {
+  let status: EquipmentStatus = 'Available'
+
+  if (
+    item.status === 'IN_USE' ||
+    item.status === 'IN USE' ||
+    item.status === 'In Use'
+  ) {
+    status = 'In Use'
+  } else if (
+    item.status === 'UNDER_MAINTENANCE' ||
+    item.status === 'UNDER MAINTENANCE' ||
+    item.status === 'Under Maintenance'
+  ) {
+    status = 'Under Maintenance'
+  }
+
+  return {
+    id: item.id,
+    assetTag: item.assetTag,
+    name: item.name,
+    department: item.category,
+    location: item.location,
+    status,
+  }
+}
+
+async function readResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  const result = await response.json() as ApiResponse<T>
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || `Request failed (${response.status})`)
+  }
+
+  return result
+}
+
 function App() {
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null)
-
-  const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: 1,
-      name: 'Ventilator',
-      department: 'ICU',
-      location: 'Room 101',
-      status: 'Available',
-    },
-    {
-      id: 2,
-      name: 'ECG Machine',
-      department: 'Cardiology',
-      location: 'Room 202',
-      status: 'In Use',
-    },
-    {
-      id: 3,
-      name: 'Patient Monitor',
-      department: 'Emergency',
-      location: 'Room 105',
-      status: 'Available',
-    },
-  ])
+  const [equipment, setEquipment] = useState<Equipment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const [editingId, setEditingId] = useState<number | null>(null)
   const [name, setName] = useState('')
+  const [assetTag, setAssetTag] = useState('')
   const [department, setDepartment] = useState('')
   const [location, setLocation] = useState('')
   const [status, setStatus] = useState<EquipmentStatus>('Available')
@@ -58,6 +100,35 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
+
+  async function loadEquipment(showLoading = true) {
+    if (showLoading) setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch(API_URL)
+      const result = await readResponse<ApiEquipment[]>(response)
+
+      if (!Array.isArray(result.data)) {
+        throw new Error('Unexpected response from the equipment API')
+      }
+
+      setEquipment(result.data.map(mapApiEquipment))
+    } catch (err) {
+      console.error('Error loading equipment:', err)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not load equipment. Check that the backend is running.',
+      )
+    } finally {
+      if (showLoading) setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadEquipment()
+  }, [])
 
   const totalEquipment = equipment.length
 
@@ -73,13 +144,21 @@ function App() {
     (item) => item.status === 'Under Maintenance',
   ).length
 
+  const departments = [
+    ...new Set(equipment.map((item) => item.department)),
+  ].sort()
+
   const filteredEquipment = equipment.filter((item) => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.trim().toLowerCase())
+    const search = searchTerm.trim().toLowerCase()
+
+    const matchesSearch =
+      item.name.toLowerCase().includes(search) ||
+      item.assetTag.toLowerCase().includes(search) ||
+      String(item.id).includes(search)
 
     const matchesDepartment =
-      departmentFilter === 'All' || item.department === departmentFilter
+      departmentFilter === 'All' ||
+      item.department === departmentFilter
 
     const matchesStatus =
       statusFilter === 'All' || item.status === statusFilter
@@ -90,6 +169,7 @@ function App() {
   function handleCancelEdit() {
     setEditingId(null)
     setName('')
+    setAssetTag('')
     setDepartment('')
     setLocation('')
     setStatus('Available')
@@ -102,10 +182,11 @@ function App() {
   }
 
   function handleEdit(item: Equipment) {
-    if (currentRole !== 'Admin') return
+    if (currentRole !== 'Admin' || saving) return
 
     setEditingId(item.id)
     setName(item.name)
+    setAssetTag(item.assetTag)
     setDepartment(item.department)
     setLocation(item.location)
     setStatus(item.status)
@@ -113,79 +194,132 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function handleDelete(item: Equipment) {
-    if (currentRole !== 'Admin') return
+  async function handleDelete(item: Equipment) {
+    if (currentRole !== 'Admin' || deletingId !== null || saving) return
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${item.name}?`,
+      `Are you sure you want to delete ${item.name} (${item.assetTag})? This cannot be undone.`,
     )
 
     if (!confirmed) return
 
-    setEquipment((previous) =>
-      previous.filter((equipmentItem) => equipmentItem.id !== item.id),
-    )
+    setDeletingId(item.id)
 
-    if (editingId === item.id) {
-      handleCancelEdit()
+    try {
+      const response = await fetch(`${API_URL}/${item.id}`, {
+        method: 'DELETE',
+      })
+
+      await readResponse<ApiEquipment>(response)
+
+      if (editingId === item.id) {
+        handleCancelEdit()
+      }
+
+      await loadEquipment(false)
+      window.alert('Equipment deleted successfully.')
+    } catch (err) {
+      console.error('Error deleting equipment:', err)
+      window.alert(
+        err instanceof Error ? err.message : 'Could not delete equipment.',
+      )
+    } finally {
+      setDeletingId(null)
     }
   }
 
-  function handleStatusChange(id: number, newStatus: EquipmentStatus) {
-    if (currentRole !== 'Admin' && currentRole !== 'Staff') return
+  async function handleStatusChange(
+    id: number,
+    newStatus: EquipmentStatus,
+  ) {
+    if (
+      (currentRole !== 'Admin' && currentRole !== 'Staff') ||
+      saving ||
+      deletingId !== null
+    ) {
+      return
+    }
 
-    setEquipment((previous) =>
-      previous.map((item) =>
-        item.id === id ? { ...item, status: newStatus } : item,
-      ),
-    )
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: toApiStatus(newStatus) }),
+      })
 
-    if (editingId === id) {
-      setStatus(newStatus)
+      await readResponse<ApiEquipment>(response)
+      await loadEquipment(false)
+    } catch (err) {
+      console.error('Error updating status:', err)
+      window.alert(
+        err instanceof Error ? err.message : 'Could not update status.',
+      )
+      await loadEquipment(false)
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (currentRole !== 'Admin') return
+    if (currentRole !== 'Admin' || saving) return
 
     const cleanName = name.trim()
+    const cleanAssetTag = assetTag.trim()
     const cleanDepartment = department.trim()
     const cleanLocation = location.trim()
 
-    if (!cleanName || !cleanDepartment || !cleanLocation) {
+    if (
+      !cleanName ||
+      !cleanAssetTag ||
+      !cleanDepartment ||
+      !cleanLocation
+    ) {
       window.alert('Please fill in all fields.')
       return
     }
 
-    if (editingId !== null) {
-      setEquipment((previous) =>
-        previous.map((item) =>
-          item.id === editingId
-            ? {
-                ...item,
-                name: cleanName,
-                department: cleanDepartment,
-                location: cleanLocation,
-                status,
-              }
-            : item,
-        ),
-      )
-    } else {
-      const newEquipment: Equipment = {
-        id: Date.now(),
-        name: cleanName,
-        department: cleanDepartment,
-        location: cleanLocation,
-        status,
-      }
-
-      setEquipment((previous) => [...previous, newEquipment])
+    const payload = {
+      name: cleanName,
+      assetTag: cleanAssetTag,
+      category: cleanDepartment,
+      location: cleanLocation,
+      status: toApiStatus(status),
+      condition: 'GOOD',
     }
 
-    handleCancelEdit()
+    setSaving(true)
+
+    try {
+      const isEditing = editingId !== null
+      const response = await fetch(
+        isEditing ? `${API_URL}/${editingId}` : API_URL,
+        {
+          method: isEditing ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+      )
+
+      await readResponse<ApiEquipment>(response)
+
+      await loadEquipment(false)
+      handleCancelEdit()
+
+      window.alert(
+        isEditing
+          ? 'Equipment updated successfully!'
+          : 'Equipment added successfully!',
+      )
+    } catch (err) {
+      console.error('Error saving equipment:', err)
+      window.alert(
+        err instanceof Error
+          ? err.message
+          : 'Could not save equipment. Check the backend.',
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (currentRole === null) {
@@ -231,7 +365,7 @@ function App() {
           <div className="brand-text">
             <h1>Smart Hospital</h1>
             <p>Healthcare Asset Management System</p>
-            <span className="brand-accent-line"></span>
+            <span className="brand-accent-line" />
           </div>
         </div>
       </header>
@@ -274,6 +408,18 @@ function App() {
 
             <form onSubmit={handleSubmit}>
               <div>
+                <label htmlFor="assetTag">Asset Tag</label>
+                <input
+                  id="assetTag"
+                  value={assetTag}
+                  onChange={(event) => setAssetTag(event.target.value)}
+                  placeholder="e.g. HSP-021"
+                  required
+                  disabled={editingId !== null || saving}
+                />
+              </div>
+
+              <div>
                 <label htmlFor="name">Equipment Name</label>
                 <input
                   id="name"
@@ -281,6 +427,7 @@ function App() {
                   onChange={(event) => setName(event.target.value)}
                   placeholder="e.g. X-Ray Machine"
                   required
+                  disabled={saving}
                 />
               </div>
 
@@ -292,6 +439,7 @@ function App() {
                   onChange={(event) => setDepartment(event.target.value)}
                   placeholder="e.g. Radiology"
                   required
+                  disabled={saving}
                 />
               </div>
 
@@ -303,6 +451,7 @@ function App() {
                   onChange={(event) => setLocation(event.target.value)}
                   placeholder="e.g. Room 301"
                   required
+                  disabled={saving}
                 />
               </div>
 
@@ -314,6 +463,7 @@ function App() {
                   onChange={(event) =>
                     setStatus(event.target.value as EquipmentStatus)
                   }
+                  disabled={saving}
                 >
                   {statuses.map((itemStatus) => (
                     <option key={itemStatus} value={itemStatus}>
@@ -324,12 +474,20 @@ function App() {
               </div>
 
               <div className="form-actions">
-                <button type="submit">
-                  {editingId !== null ? 'Save Changes' : 'Add Equipment'}
+                <button type="submit" disabled={saving}>
+                  {saving
+                    ? 'Saving...'
+                    : editingId !== null
+                      ? 'Save Changes'
+                      : 'Add Equipment'}
                 </button>
 
                 {editingId !== null && (
-                  <button type="button" onClick={handleCancelEdit}>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                  >
                     Cancel Edit
                   </button>
                 )}
@@ -365,8 +523,8 @@ function App() {
         <div className="equipment-controls">
           <input
             type="search"
-            aria-label="Search equipment by name"
-            placeholder="Search equipment..."
+            aria-label="Search by equipment name, ID, or asset tag"
+            placeholder="Search name, ID, or asset tag..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
           />
@@ -400,6 +558,10 @@ function App() {
           <button type="button" onClick={handleResetFilters}>
             Reset Filters
           </button>
+
+          <button type="button" onClick={() => void loadEquipment()}>
+            Refresh
+          </button>
         </div>
 
         <div className="equipment-list-heading">
@@ -410,97 +572,117 @@ function App() {
           </p>
         </div>
 
-        <div className="equipment-table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Equipment Name</th>
-                <th scope="col">Department</th>
-                <th scope="col">Location</th>
-                <th scope="col">Status</th>
-                <th scope="col">
-                  {canManageEquipment
-                    ? 'Actions'
-                    : canUpdateStatus
-                      ? 'Update Status'
-                      : 'Access'}
-                </th>
-              </tr>
-            </thead>
+        {loading && <p>Loading equipment from database...</p>}
 
-            <tbody>
-              {filteredEquipment.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>{item.department}</td>
-                  <td>{item.location}</td>
-                  <td>
-                    {canUpdateStatus ? (
-                      <select
-                        aria-label={`Update status for ${item.name}`}
-                        value={item.status}
-                        onChange={(event) =>
-                          handleStatusChange(
-                            item.id,
-                            event.target.value as EquipmentStatus,
-                          )
-                        }
-                      >
-                        {statuses.map((itemStatus) => (
-                          <option key={itemStatus} value={itemStatus}>
-                            {itemStatus}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span
-                        className={`status-badge ${item.status
-                          .toLowerCase()
-                          .replace(/\s+/g, '-')}`}
-                      >
-                        {item.status}
-                      </span>
-                    )}
-                  </td>
+        {error && (
+          <div role="alert">
+            <p>{error}</p>
+            <button type="button" onClick={() => void loadEquipment()}>
+              Try Again
+            </button>
+          </div>
+        )}
 
-                  <td>
-                    {canManageEquipment ? (
-                      <div className="equipment-actions">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(item)}
-                          aria-label={`Edit ${item.name}`}
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item)}
-                          aria-label={`Delete ${item.name}`}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    ) : currentRole === 'Staff' ? (
-                      <span>Status only</span>
-                    ) : (
-                      <span>Read only</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-
-              {filteredEquipment.length === 0 && (
+        {!loading && !error && (
+          <div className="equipment-table-wrapper">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={5} className="empty-state">
-                    No equipment matches your search or selected filters.
-                  </td>
+                  <th scope="col">ID</th>
+                  <th scope="col">Asset Tag</th>
+                  <th scope="col">Equipment Name</th>
+                  <th scope="col">Department</th>
+                  <th scope="col">Location</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">
+                    {canManageEquipment
+                      ? 'Actions'
+                      : canUpdateStatus
+                        ? 'Update Status'
+                        : 'Access'}
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody>
+                {filteredEquipment.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.assetTag}</td>
+                    <td>{item.name}</td>
+                    <td>{item.department}</td>
+                    <td>{item.location}</td>
+                    <td>
+                      {canUpdateStatus ? (
+                        <select
+                          aria-label={`Update status for ${item.name}`}
+                          value={item.status}
+                          disabled={saving || deletingId !== null}
+                          onChange={(event) =>
+                            void handleStatusChange(
+                              item.id,
+                              event.target.value as EquipmentStatus,
+                            )
+                          }
+                        >
+                          {statuses.map((itemStatus) => (
+                            <option key={itemStatus} value={itemStatus}>
+                              {itemStatus}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className={`status-badge ${item.status
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')}`}
+                        >
+                          {item.status}
+                        </span>
+                      )}
+                    </td>
+
+                    <td>
+                      {canManageEquipment ? (
+                        <div className="equipment-actions">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(item)}
+                            disabled={saving || deletingId !== null}
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(item)}
+                            disabled={saving || deletingId !== null}
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            {deletingId === item.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      ) : currentRole === 'Staff' ? (
+                        <span>Status only</span>
+                      ) : (
+                        <span>Read only</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredEquipment.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="empty-state">
+                      No equipment matches your search or selected filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )
